@@ -1,7 +1,9 @@
-import streamlit as st
+import streamlit as st 
 
-def main():
+with st.form(key = "chat"):
     st.title("Clothing Preferences")
+    st.text_input("Hello welcome to contientious closet") # TODO!
+    
     
     # Get user input for clothing styles
     clothing_styles = st.text_input("Enter your favorite clothing styles (separated by commas):")
@@ -18,6 +20,6 @@ def main():
         st.write("Your favorite colors:", favorite_colors)
         st.write("Your favorite articles of clothing:", articles_of_clothing)
 
-if __name__ == "__main__":
-    main()
+    
+    submitted = st.form_submit_button("Submit")
 
