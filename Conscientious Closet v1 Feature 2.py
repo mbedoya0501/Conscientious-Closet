@@ -1,35 +1,33 @@
-import os
-import openai
 import streamlit as st
-from openai import OpenAI
+import requests
 
+# Set the API key and base URL for OpenWeatherMap API
+API_KEY = '36407eb7cff8c8ca66f775827ec2e84c'  # Replace with your actual OpenWeatherMap API key
+BASE_URL = 'http://api.openweathermap.org/data/2.5/weather'
 
-st.markdown("# Prototype Feature 2: Suggestions Based on Weather")
-st.sidebar.markdown("# Prototype Feature 2: Suggestions Based on Weather")
+# Use Streamlit to create a text input for the city name
+city = st.text_input('Enter a city:')
 
-openai.api_key = os.environ["OPENAI_API_KEY"]
+# If a city has been entered, fetch and display the weather data
+if city:
+    try:
+        # Make a GET request to the OpenWeatherMap API
+        response = requests.get(BASE_URL, params={'q': city, 'appid': API_KEY, 'units': 'imperial'})
 
-client = OpenAI()
+        # If the request was successful, display the weather data
+        response.raise_for_status()
+        weather_data = response.json()
 
+        # Get the temperature from the weather data
+        temperature = weather_data['main']['temp']
 
-# create a wrapper function
-def get_completion(prompt, model="gpt-3.5-turbo"):
-   completion = client.chat.completions.create(
-        model=model,
-        messages=[
-        {"role":"system",
-         "content": "Based on the location provided, display a weather forecast for today and the rest of the week and provide suggestions on clothing to wear based on today's weather. Make sure to warn the user not to go out if it's too late."},
-        {"role": "user",
-         "content": prompt},
-        ]
-    )
-   return completion.choices[0].message.content
-
-# create our streamlit app
-with st.form(key = "chat"):
-    prompt = st.text_input("What is your current location? (City, State)") 
-    
-    submitted = st.form_submit_button("Submit")
-    
-    if submitted:
-        st.write(get_completion(prompt))
+        # Use Streamlit to display the temperature
+        st.write(f'The current temperature in {city} is {temperature:.2f} degrees Fahrenheit.')
+    except requests.exceptions.HTTPError as errh:
+        st.write(f"HTTP Error: {errh}")
+    except requests.exceptions.ConnectionError as errc:
+        st.write(f"Error Connecting: {errc}")
+    except requests.exceptions.Timeout as errt:
+        st.write(f"Timeout Error: {errt}")
+    except requests.exceptions.RequestException as err:
+        st.write(f"Something went wrong: {err}")
