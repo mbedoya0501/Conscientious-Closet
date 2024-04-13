@@ -1,41 +1,39 @@
 import streamlit as st
 import openai
-from datetime import datetime, timedelta
+from datetime import datetime
 
-# Set your OpenAI API key
-openai.api_key = "Open_AI_Key_Here"
+# Set up OpenAI API key
+openai.api_key = "OPENAI_API_KEY"
 
-def classify_clothing_purchase(purchase_date):
-    current_date = datetime.now().date()
-    threshold_date = current_date - timedelta(days=3*30)  # Three months ago
-
-    if purchase_date < threshold_date:
-        return "Old"
-    else:
-        return "Not old"
-
-def generate_response(classification):
-    prompt = f"What’s in this image? This clothing item is classified as: {classification}"
-    response = openai.Completion.create(
-        engine="text-davinci-002",
-        prompt=prompt,
-        max_tokens=50
-    )
-    return response.choices[0].text.strip()
+def classify_clothes_age(purchase_date):
+    # Convert purchase_date to datetime object
+    purchase_date = datetime.strptime(purchase_date, "%Y-%m-%d")
+    
+    # Calculate the difference between the purchase date and today's date
+    delta = datetime.now() - purchase_date
+    
+    # Define age categories
+    if delta.days <= 30:  # Less than or equal to 30 days old
+        return 'New'
+    elif delta.days <= 90:  # Less than or equal to 90 days old
+        return 'Fairly New'
+    elif delta.days <= 365:  # Less than or equal to 1 year old
+        return 'Old'
+    else:  # More than 1 year old
+        return 'Very Old'
 
 def main():
-    st.title("Clothing Item Classifier")
-
-    # User input for purchase date
-    purchase_date = st.date_input("Enter the purchase date of the clothing item:")
+    st.title("Clothes Age Classifier")
+    
+    # Collect user input
+    purchase_date = st.date_input("Enter the date of clothes purchase:")
     
     if st.button("Classify"):
-        classification = classify_clothing_purchase(purchase_date)
-        response = generate_response(classification)
-        st.write(f"The clothing item is classified as: {classification}")
-        st.write("OpenAI Response:")
-        st.write(response)
+        # Classify the age of clothes
+        classification = classify_clothes_age(str(purchase_date))
+        
+        # Display classification result
+        st.write(f"The clothes are classified as: {classification}")
 
 if __name__ == "__main__":
     main()
-    
