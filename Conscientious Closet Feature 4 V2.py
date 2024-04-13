@@ -3,7 +3,7 @@ import openai
 from datetime import datetime, timedelta
 
 # Set your OpenAI API key
-openai.api_key = "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"
+openai.api_key = "Open_AI_Key_Here"
 
 def classify_clothing_purchase(purchase_date):
     current_date = datetime.now().date()
