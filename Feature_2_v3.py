@@ -5,7 +5,7 @@ client = OpenAI()
 
 
 # Set the API key and base URL for OpenWeatherMap API
-API_KEY = '36407eb7cff8c8ca66f775827ec2e84c'  # Replace with your actual OpenWeatherMap API key
+API_KEY = 'OpenWeatherMapAPI'  # Replace with your actual OpenWeatherMap API key
 BASE_URL = 'http://api.openweathermap.org/data/2.5/weather'
 
 st.markdown("# Prototype Feature 2: Suggestions Based on Weather")
