@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # Set the API key and base URL for OpenWeatherMap API
-API_KEY = '36407eb7cff8c8ca66f775827ec2e84c'  # Replace with your actual OpenWeatherMap API key
+API_KEY = 'OpenWeatherAPI'  # Replace with your actual OpenWeatherMap API key
 BASE_URL = 'http://api.openweathermap.org/data/2.5/weather'
 
 # Use Streamlit to create a text input for the city name
