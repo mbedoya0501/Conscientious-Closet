@@ -1,0 +1,81 @@
+import base64
+import requests
+import os
+import openai
+import streamlit as st
+
+
+# OpenAI API Key
+api_key = os.environ["open_ai_key"]
+
+
+# Function to encode the image
+def encode_image(image_path):
+ with open(image_path, "rb") as image_file:
+   return base64.b64encode(image_file.read()).decode('utf-8')
+
+
+# Path to your image
+image_path = st.text_input("Enter the path to your image: ")
+
+
+# Getting the base64 string
+base64_image = encode_image(image_path)
+
+
+headers = {
+ "Content-Type": "application/json",
+ "Authorization": f"Bearer {api_key}"
+}
+
+
+payload = {
+ "model": "gpt-4-vision-preview",
+ "messages": [
+   {
+     "role": "user",
+     "content": [
+       {
+         "type": "text",
+         "text": "What’s in this image?"
+       },
+       {
+         "type": "image_url",
+         "image_url": {
+           "url": f"data:image/jpeg;base64,{base64_image}"
+         }
+       }
+     ]
+   }
+ ],
+ "max_tokens": 300
+}
+
+
+response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+
+
+st.write(response.json())
+
+
+# Define specific clothing styles and colors
+clothing_styles = ['Monochrome', 'Techwear', 'Streetwear', 'Business Casual', 'Athleisure']
+clothing_colors = ['Black', 'White', 'Gray', 'Olive', 'Navy']
+
+
+# Create dropdown menus for style and color
+selected_style = st.selectbox('Select a clothing style:', clothing_styles)
+selected_color = st.selectbox('Select a clothing color:', clothing_colors)
+
+
+# Generate a fashion recommendation based on the selected style and color
+prompt = f"I'm wearing a {selected_color} {selected_style} outfit. What additional pieces should I add to complete the look?"
+response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
+
+
+# Display the recommendation
+st.write(response.choices[0].text.strip())
+
+
+#
+
