@@ -1,0 +1,75 @@
+import streamlit as st
+import openai
+from datetime import datetime
+import requests
+
+# Set up OpenAI API key
+
+def classify_clothes_age(purchase_date):
+    # Calculate the difference between the purchase date and today's date
+    delta = datetime.now().date() - purchase_date
+
+    # Define age categories
+    if delta.days <= 30:  # Less than or equal to 30 days old
+        return 'New'
+    elif delta.days <= 90:  # Less than or equal to 90 days old
+        return 'Fairly New'
+    elif delta.days <= 365:  # Less than or equal to 1 year old
+        return 'Old'
+    else:  # More than 1 year old
+        return 'Very Old'
+
+def get_nearest_thrift_stores(location):
+    # Yelp Fusion API URL
+    url = "https://api.yelp.com/v3/businesses/search"
+
+    # Parameters for the API request
+    params = {
+        "location": location,  # User's location
+        "term": "thrift stores",  # Looking for thrift stores
+        "limit": 5  # Limit to top 5 results
+    }
+
+    # Headers for the API request
+    headers = {
+        "Authorization": "Bearer YELP API"  # Your Yelp API key
+    }
+
+    # Send the request and get the response
+    response = requests.get(url, params=params, headers=headers)
+
+    # Convert the response to JSON
+    data = response.json()
+
+    # Check if 'businesses' key exists in the response
+    if 'businesses' in data:
+        # Get the thrift stores from the response
+        thrift_stores = data['businesses']
+    else:
+        thrift_stores = []
+        print("No 'businesses' key in the response. The response was: ", data)
+
+    return thrift_stores
+
+def main():
+    st.title("Clothes Age Classifier")
+
+    # Collect user input
+    purchase_date = st.date_input("Enter the date of clothes purchase:")
+
+    # Classify the clothes age
+    clothes_age = classify_clothes_age(purchase_date)
+
+    # Display the classification result
+    st.write(f"The clothes are classified as: {clothes_age}")
+
+    # If the clothes are old or very old, ask for the user's location and get the nearest thrift stores
+    if clothes_age in ["Old", "Very Old"]:
+        st.write('Your clothes are quite old. You might consider donating them.')
+        location = st.text_input("What's your current location?")
+        thrift_stores = get_nearest_thrift_stores(location)
+        st.write("Here are some thrift stores near you:")
+        for store in thrift_stores:
+            st.write(store["name"])
+if __name__ == "__main__":
+    main()
