@@ -6,7 +6,7 @@ import requests
 st.set_page_config(layout='wide')
 
 # Your OpenWeather API key
-api_key = "36407eb7cff8c8ca66f775827ec2e84c"
+api_key = "API HERE"
 
 # Let the user input a city
 city = st.text_input('Enter a city:')
