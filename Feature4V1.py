@@ -3,39 +3,52 @@ import pandas as pd
 import requests
 import openai
 
-# Ensure you replace 'your_openai_api_key_here' and 'your_openweather_api_key_here' with your actual API keys
+# Ensure you replace these with your actual API keys
 OPENAI_API_KEY = 'your-api-key-here'
-OPENWEATHER_API_KEY = 'your-weather-api-key-here'  
-BASE_URL = 'http://api.openweathermap.org/data/2.5/weather'
+OPENWEATHER_API_KEY = 'weather-api-key-here'
+FORECAST_URL = 'http://api.openweathermap.org/data/2.5/forecast'  # Forecast endpoint
 
 # Initialize OpenAI API key
 openai.api_key = OPENAI_API_KEY
 
 def get_outfit_suggestion(weather):
-    """Generate an outfit suggestion based on the weather using GPT-4."""
-    response = openai.Completion.create(
-        model="gpt-4",
-        prompt=f"Suggest an outfit for a {weather.lower()} day:",
-        max_tokens=60
+    """Generate an outfit suggestion based on the weather using GPT-3.5."""
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",  # Ensure this model is available in your API plan
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": f"Suggest an outfit for a {weather.lower()} day:"}
+        ]
     )
-    return response.choices[0].text.strip()
+    return response['choices'][0]['message']['content'].strip()
 
-def get_weather(city):
-    """Fetch the current weather for a specified city."""
-    response = requests.get(BASE_URL, params={'q': city, 'appid': OPENWEATHER_API_KEY, 'units': 'imperial'})
+def get_weather(city, date):
+    """Fetch the forecasted weather for a specified city and date."""
+    response = requests.get(FORECAST_URL, params={'q': city, 'appid': OPENWEATHER_API_KEY, 'units': 'imperial'})
     if response.status_code != 200:
         response.raise_for_status()  # This will raise an HTTPError for bad responses
-    return response.json()
+
+    data = response.json()
+    for item in data['list']:
+        if item['dt_txt'].startswith(date.strftime('%Y-%m-%d')):
+            return item['weather'][0]['description'], item['main']['temp']
+    return "clear sky", 70  # Default weather if no exact match found
 
 def main():
     st.title('Outfit Planning and Weather App')
 
     city = st.text_input('Enter a city and state (e.g., "Springfield, Illinois"):')
-    if city:
+    date = st.date_input("Choose a date for your outfit plan:")
+
+    if city and date:
         try:
-            weather_data = get_weather(city)
-            weather_description = weather_data["weather"][0]["description"]
-            st.write(f'The current temperature in {city} is {weather_data["main"]["temp"]:.2f} degrees Fahrenheit with {weather_description}.')
+            weather_description, temperature = get_weather(city, date)
+            st.write(f"The forecasted temperature in {city} on {date} is {temperature:.2f} degrees Fahrenheit with {weather_description}.")
+            suggestion_button = st.button("Get Outfit Suggestion")
+            if suggestion_button:
+                suggestion = get_outfit_suggestion(weather_description)
+                st.session_state['suggestion'] = suggestion
+                st.write(f"Suggested Outfit: {suggestion}")
         except requests.exceptions.HTTPError as e:
             st.error(f"An error occurred: {e}")
             return  # Exit the function if there's an error
@@ -45,14 +58,12 @@ def main():
 
     if city and 'weather_description' in locals():
         with st.form("outfit_planner"):
-            date = st.date_input("Choose a date for your outfit plan:")
-            suggestion = get_outfit_suggestion(weather_description) if 'Get Outfit Suggestion' in st.session_state else ""
-            outfit = st.text_input("Describe your outfit for the day:", value=suggestion)
+            outfit = st.text_input("Describe your outfit for the day:", value=st.session_state.get('suggestion', ''))
             submitted = st.form_submit_button("Submit Outfit Plan")
             if submitted:
                 if 'outfits' not in st.session_state:
-                    st.session_state['outfits'] = pd.DataFrame(columns=['Date', 'City', 'Weather', 'Outfit'])
-                new_data = pd.DataFrame([[date, city, weather_description, outfit]], columns=['Date', 'City', 'Weather', 'Outfit'])
+                    st.session_state['outfits'] = pd.DataFrame(columns=['Date', 'City', 'Weather', 'Temperature', 'Outfit'])
+                new_data = pd.DataFrame([[date, city, weather_description, temperature, outfit]], columns=['Date', 'City', 'Weather', 'Temperature', 'Outfit'])
                 st.session_state['outfits'] = pd.concat([st.session_state['outfits'], new_data], ignore_index=True)
 
         if 'outfits' in st.session_state and not st.session_state['outfits'].empty:
